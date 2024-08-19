@@ -126,6 +126,43 @@ func main() {
 					},
 				},
 			},
+			{
+				Name:  "pack",
+				Usage: "packs up directory of files into zip",
+				Action: func(cCtx *cli.Context) error {
+					target := strings.TrimSpace(cCtx.Args().Get(0))
+					if target == "" {
+						return errors.New("please provide a directory")
+					}
+					filestat, err := os.Stat(target)
+					if errors.Is(err, os.ErrNotExist) {
+						return errors.New("provided directory does not exist")
+					}
+					if !filestat.IsDir() {
+						return errors.New("provided file is not a directory")
+					}
+					filename := fmt.Sprintf("%s.zip", target)
+					err2 := otto.ZipDirectory(target, filename)
+					fmt.Println("Saved ZIP File", filename)
+					return err2
+				},
+			},
+			{
+				Name:  "unpack",
+				Usage: "unpacks zip file into its directory",
+				Action: func(cCtx *cli.Context) error {
+					target := strings.TrimSpace(cCtx.Args().Get(0))
+					if target == "" {
+						return errors.New("please provide a value")
+					}
+					if target[len(target)-4:] != ".zip" {
+						return errors.New("you need to provide a .zip file")
+					}
+					// Unzip to current directory
+					err := otto.UnzipDirectory(target, "")
+					return err
+				},
+			},
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
