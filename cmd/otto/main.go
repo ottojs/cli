@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"strings"
 	"syscall"
@@ -161,6 +162,22 @@ func main() {
 					// Unzip to current directory
 					err := otto.UnzipDirectory(target, "")
 					return err
+				},
+			},
+			{
+				Name:  "download",
+				Usage: "downloads a file from URL (HTTP GET, filename is from URL)",
+				Action: func(cCtx *cli.Context) error {
+					target := strings.TrimSpace(cCtx.Args().Get(0))
+					if target == "" {
+						return errors.New("please provide a URL")
+					}
+					_, err := url.ParseRequestURI(target)
+					if err != nil {
+						return errors.New("provided URL is invalid")
+					}
+					err2 := otto.DownloadURL(target)
+					return err2
 				},
 			},
 		},
