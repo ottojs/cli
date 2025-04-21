@@ -31,7 +31,8 @@ func ScanDirectories(dirs []string, pattern string) ([]string, error) {
 		err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 			// Permission denied
 			if err != nil {
-				return err
+				return nil
+				//return err
 			}
 
 			// No directories please (you can change this)

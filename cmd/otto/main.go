@@ -196,7 +196,8 @@ func main() {
 					if !exists || !isDir {
 						return errors.New("invalid target, it either does not exist or is not a directory")
 					}
-					results, err2 := otto.ScanDirectories([]string{target}, "*.txt")
+					query := strings.TrimSpace(cCtx.Args().Get(1))
+					results, err2 := otto.ScanDirectories([]string{target}, query)
 					if err2 != nil {
 						return err2
 					}
