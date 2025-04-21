@@ -180,6 +180,31 @@ func main() {
 					return err2
 				},
 			},
+			{
+				Name:  "scandir",
+				Usage: "scans directory for matching file names",
+				Action: func(cCtx *cli.Context) error {
+					target := strings.TrimSpace(cCtx.Args().Get(0))
+					if target == "" {
+						return errors.New("please provide a directory path")
+					}
+					exists, isDir, err1 := otto.Exists(target)
+					if err1 != nil {
+						return err1
+					}
+					if !exists || !isDir {
+						return errors.New("invalid target, it either does not exist or is not a directory")
+					}
+					results, err2 := otto.ScanDirectories([]string{target}, "*.txt")
+					if err2 != nil {
+						return err2
+					}
+					for _, f := range results {
+						fmt.Println(f)
+					}
+					return nil
+				},
+			},
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
