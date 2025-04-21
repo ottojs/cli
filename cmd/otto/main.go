@@ -215,6 +215,36 @@ func main() {
 					return nil
 				},
 			},
+			{
+				Name:  "findchunk",
+				Usage: "checks for chunk in file",
+				Action: func(cCtx *cli.Context) error {
+					needle := []string{
+						"where's otto?",
+						"another line",
+					}
+					target := strings.TrimSpace(cCtx.Args().Get(0))
+					if target == "" {
+						return errors.New("please provide a path to a file")
+					}
+					exists, isDir, err1 := otto.Exists(target)
+					if err1 != nil {
+						return err1
+					}
+					if !exists || isDir {
+						return errors.New("invalid target, it either does not exist or is a directory")
+					}
+					found, err2 := otto.FindChunkInFile(target, needle)
+					if err2 != nil {
+						return err2
+					}
+					fmt.Println("Searched:", target)
+					fmt.Println("... for...")
+					fmt.Println(strings.Join(needle, "\n"))
+					fmt.Println("Found?:", found)
+					return nil
+				},
+			},
 		},
 	}
 	if err := app.Run(os.Args); err != nil {

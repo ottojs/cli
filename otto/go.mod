@@ -1,3 +1,3 @@
 module code.ottojs.org/go/otto
 
-go 1.23
+go 1.24
