@@ -205,6 +205,16 @@ func main() {
 					return nil
 				},
 			},
+			{
+				Name:  "os",
+				Usage: "shows the operating system name",
+				Action: func(cCtx *cli.Context) error {
+					// This is to demonstrate os-specific file includes with build flags
+					// See the "settings_*.go" files
+					fmt.Println(otto.OperatingSystem)
+					return nil
+				},
+			},
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
