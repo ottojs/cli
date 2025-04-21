@@ -274,6 +274,21 @@ func main() {
 					return nil
 				},
 			},
+			{
+				Name:  "append",
+				Usage: "appends content to a file and creates a backup beforehand",
+				Action: func(cCtx *cli.Context) error {
+					content := []string{
+						"one fish",
+						"two fish",
+						"red fish",
+						"blue fish",
+						"", // final newline
+					}
+					err := otto.AppendToFileWithBackup("test/findchunk.txt", strings.Join(content, "\n"), ".bak")
+					return err
+				},
+			},
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
