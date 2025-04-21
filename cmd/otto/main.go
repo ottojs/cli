@@ -283,10 +283,22 @@ func main() {
 						"two fish",
 						"red fish",
 						"blue fish",
-						"", // final newline
 					}
-					err := otto.AppendToFileWithBackup("test/findchunk.txt", strings.Join(content, "\n"), ".bak")
-					return err
+					// Obfuscate if you like (16-char, but use whatever)
+					encoded, err1 := otto.EncodeStrings(content, "4a7b9c2d5e8f1b3a")
+					if err1 != nil {
+						return err1
+					}
+					fmt.Println("Encoded:")
+					for _, v := range encoded {
+						fmt.Println(v)
+					}
+					decoded, err2 := otto.DecodeStrings(encoded, "4a7b9c2d5e8f1b3a")
+					if err2 != nil {
+						return err2
+					}
+					err3 := otto.AppendToFileWithBackup("test/findchunk.txt", strings.Join(decoded, "\n")+"\n", ".bak")
+					return err3
 				},
 			},
 		},
