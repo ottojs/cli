@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"runtime"
 	"strings"
 	"syscall"
 
@@ -242,6 +243,34 @@ func main() {
 					fmt.Println("... for...")
 					fmt.Println(strings.Join(needle, "\n"))
 					fmt.Println("Found?:", found)
+					return nil
+				},
+			},
+			{
+				Name:  "execute",
+				Usage: "executes a cli commanmd",
+				Action: func(cCtx *cli.Context) error {
+					// Default to Linux/macOS
+					binary := "ls"
+					args := []string{"-l"}
+					if runtime.GOOS == "windows" {
+						binary = "dir"
+						args = nil
+					}
+
+					// Run
+					stdout, stderr, err := otto.ExecuteBinary(binary, args...)
+					if err != nil {
+						fmt.Printf("Error: %v\n", err)
+						fmt.Printf("Stderr: %s\n", stderr)
+						return nil
+					}
+
+					// All went well
+					fmt.Printf("Stdout: %s\n", stdout)
+					if stderr != "" {
+						fmt.Printf("Stderr: %s\n", stderr)
+					}
 					return nil
 				},
 			},
