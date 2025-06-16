@@ -35,6 +35,7 @@ func AdminCheck() bool {
 		return false
 	}
 	filehandle.Close()
+	return true
 }
 
 // https://stackoverflow.com/questions/13222724/command-line-to-remove-an-environment-variable-from-the-os-level-configuration
@@ -60,7 +61,7 @@ func EnvVarSet(key, value string) error {
 func EnvVarGet(key string) string {
 	// echo %MYVAR%
 	args := []string{
-		"%"+strings.ToUpper(key)+"%"
+		"%" + strings.ToUpper(key) + "%",
 	}
 	stdout, _, err := ExecuteBinary("echo", args...)
 	if err != nil {
@@ -88,7 +89,7 @@ func EnvVarDelete(key string) error {
 		"/V",
 		strings.ToUpper(key),
 	}
-	_, stderr, err := ExecuteBinary("REG", args...)
+	_, _, err := ExecuteBinary("REG", args...)
 	if err != nil {
 		// fmt.Printf("Error: %v"+OSNewLine, err)
 		// fmt.Printf("Stderr: %s"+OSNewLine, stderr)

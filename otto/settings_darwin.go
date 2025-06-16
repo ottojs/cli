@@ -60,7 +60,6 @@ func EnvVarSet(key, value string) error {
 
 func EnvVarGet(key string) string {
 	return os.Getenv(key)
-	return ""
 }
 
 func EnvVarDelete(key string) error {
