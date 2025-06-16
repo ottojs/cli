@@ -6,9 +6,16 @@ import (
 	"strings"
 )
 
+// Same as below but with stricter security
 func DeleteLines(filename, prefix string) error {
+	return DeleteLinesWithOptions(filename, prefix, false)
+}
+
+// Removes lines with the given prefix from a file
+// If allowAbsolute is true, it allows absolute paths and home directory expansion
+func DeleteLinesWithOptions(filename, prefix string, allowAbsolute bool) error {
 	// Validate and sanitize the path
-	safePath, err := SecurePath(filename)
+	safePath, err := SecurePathWithOptions(filename, allowAbsolute)
 	if err != nil {
 		return fmt.Errorf("invalid file path: %w", err)
 	}
@@ -22,22 +29,43 @@ func DeleteLines(filename, prefix string) error {
 	filtered := []string{}
 
 	for _, line := range lines {
-		if !strings.HasPrefix(line, prefix) {
+		// Use TrimSpace to handle indented lines
+		if !strings.HasPrefix(strings.TrimSpace(line), prefix) {
 			filtered = append(filtered, line)
 		}
 	}
 
-	return os.WriteFile(safePath, []byte(strings.Join(filtered, OSNewLine)), 0600)
+	// Preserve file permissions if it exists
+	info, err := os.Stat(safePath)
+	mode := os.FileMode(0600)
+	if err == nil {
+		mode = info.Mode()
+	}
+
+	return os.WriteFile(safePath, []byte(strings.Join(filtered, OSNewLine)), mode)
 }
 
 func WriteFile(content []byte, destination string) error {
+	return WriteFileWithOptions(content, destination, false)
+}
+
+// Writes content to a file
+// If allowAbsolute is true, it allows absolute paths and home directory expansion
+func WriteFileWithOptions(content []byte, destination string, allowAbsolute bool) error {
 	// Validate and sanitize the path
-	safePath, err := SecurePath(destination)
+	safePath, err := SecurePathWithOptions(destination, allowAbsolute)
 	if err != nil {
 		return fmt.Errorf("invalid file path: %w", err)
 	}
 
-	file, err1 := os.OpenFile(safePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	// Preserve file permissions if it exists
+	info, err := os.Stat(safePath)
+	mode := os.FileMode(0600)
+	if err == nil {
+		mode = info.Mode()
+	}
+
+	file, err1 := os.OpenFile(safePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode)
 	if err1 != nil {
 		return fmt.Errorf("failed to open file: %w", err1)
 	}

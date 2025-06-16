@@ -3,14 +3,20 @@ package otto
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 )
 
-// SecurePath validates and sanitizes a file path to prevent directory traversal attacks.
-// It returns an error if the path attempts to escape the current working directory
-// or contains other security risks.
+// Same as below but with stricter security
 func SecurePath(path string) (string, error) {
+	return SecurePathWithOptions(path, false)
+}
+
+// Validates and sanitizes a file path with configurable options
+// If allowAbsolute is true, it allows absolute paths and home directory (~) expansion
+// This should only be used for system configuration files
+func SecurePathWithOptions(path string, allowAbsolute bool) (string, error) {
 	if path == "" {
 		return "", errors.New("path cannot be empty")
 	}
@@ -20,8 +26,29 @@ func SecurePath(path string) (string, error) {
 		return "", errors.New("path contains null bytes")
 	}
 
+	// Handle home directory expansion if allowed
+	if allowAbsolute && strings.HasPrefix(path, "~") {
+		homeDir := os.Getenv("HOME")
+		if homeDir == "" {
+			// Fallback to current user's home
+			if u, err := os.UserHomeDir(); err == nil {
+				homeDir = u
+			}
+		}
+		if homeDir != "" {
+			path = strings.Replace(path, "~", homeDir, 1)
+		}
+	}
+
 	// Clean the path to resolve . and .. elements
 	cleaned := filepath.Clean(path)
+
+	// If absolute paths are allowed, just return the cleaned path
+	if allowAbsolute {
+		return cleaned, nil
+	}
+
+	// Otherwise, enforce the existing security restrictions
 
 	// Check if it's an absolute path on any OS
 	if filepath.IsAbs(cleaned) {
@@ -76,8 +103,8 @@ func SecurePath(path string) (string, error) {
 	return cleaned, nil
 }
 
-// SecureJoinPath safely joins path elements and validates the result.
-// It ensures the resulting path doesn't escape the base directory.
+// Safely joins path elements and validates the result
+// It ensures the resulting path doesn't escape the base directory
 func SecureJoinPath(base string, elements ...string) (string, error) {
 	// Start with the base path
 	result := base

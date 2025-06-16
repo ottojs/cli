@@ -7,9 +7,16 @@ import (
 	"strings"
 )
 
+// Same as below but with stricter security
 func FindChunkInFile(path string, chunk []string) (bool, error) {
+	return FindChunkInFileWithOptions(path, chunk, false)
+}
+
+// Searches for a chunk of lines in a file
+// If allowAbsolute is true, it allows absolute paths and home directory expansion
+func FindChunkInFileWithOptions(path string, chunk []string, allowAbsolute bool) (bool, error) {
 	// Validate and sanitize the path
-	safePath, err := SecurePath(path)
+	safePath, err := SecurePathWithOptions(path, allowAbsolute)
 	if err != nil {
 		return false, fmt.Errorf("invalid file path: %w", err)
 	}

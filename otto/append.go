@@ -6,14 +6,21 @@ import (
 	"path/filepath"
 )
 
+// Same as below but with stricter security
 func AppendToFileWithBackup(path, content, backup_ext string) error {
+	return AppendToFileWithBackupAndOptions(path, content, backup_ext, false)
+}
+
+// Appends content to a file with optional backup
+// If allowAbsolute is true, it allows absolute paths and home directory expansion
+func AppendToFileWithBackupAndOptions(path, content, backup_ext string, allowAbsolute bool) error {
 	// Validate input
 	if content == "" {
 		return fmt.Errorf("content cannot be empty")
 	}
 
 	// Validate and sanitize the main path
-	safePath, err := SecurePath(path)
+	safePath, err := SecurePathWithOptions(path, allowAbsolute)
 	if err != nil {
 		return fmt.Errorf("invalid file path: %w", err)
 	}
@@ -31,13 +38,13 @@ func AppendToFileWithBackup(path, content, backup_ext string) error {
 			backupPath := safePath + backup_ext
 
 			// Validate the backup path is still safe
-			safeBackupPath, err := SecurePath(backupPath)
+			safeBackupPath, err := SecurePathWithOptions(backupPath, allowAbsolute)
 			if err != nil {
 				return fmt.Errorf("invalid backup path: %w", err)
 			}
 
 			// Back it up if it exists
-			if err := CopyFile(safePath, safeBackupPath); err != nil {
+			if err := CopyFileWithOptions(safePath, safeBackupPath, allowAbsolute); err != nil {
 				return fmt.Errorf("failed to create backup: %w", err)
 			}
 		}
@@ -62,14 +69,20 @@ func AppendToFileWithBackup(path, content, backup_ext string) error {
 }
 
 func CopyFile(source, destination string) error {
+	return CopyFileWithOptions(source, destination, false)
+}
+
+// Copies a file from source to destination
+// If allowAbsolute is true, it allows absolute paths and home directory expansion
+func CopyFileWithOptions(source, destination string, allowAbsolute bool) error {
 	// Validate and sanitize source path
-	safeSource, err := SecurePath(source)
+	safeSource, err := SecurePathWithOptions(source, allowAbsolute)
 	if err != nil {
 		return fmt.Errorf("invalid source path: %w", err)
 	}
 
 	// Validate and sanitize destination path
-	safeDest, err := SecurePath(destination)
+	safeDest, err := SecurePathWithOptions(destination, allowAbsolute)
 	if err != nil {
 		return fmt.Errorf("invalid destination path: %w", err)
 	}
