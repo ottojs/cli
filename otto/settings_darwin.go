@@ -45,11 +45,24 @@ func OSProgramPath(appname string) string {
 }
 
 func AdminCheck() bool {
+	// Method 1: Check if we're running as root (UID 0)
+	if os.Geteuid() == 0 {
+		return true
+	}
+
+	// Method 2: Check if we're running with sudo
+	// When running with sudo, SUDO_USER is set
+	if os.Getenv("SUDO_USER") != "" {
+		return true
+	}
+
+	// Method 3: Check username as fallback
 	currentUser, err := user.Current()
 	if err != nil {
-		Log("Error:", err)
+		Log("Error checking user:", err)
 		return false
 	}
+
 	return currentUser.Username == "root"
 }
 
