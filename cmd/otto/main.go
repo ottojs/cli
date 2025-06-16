@@ -24,7 +24,7 @@ func main() {
 				Email: "help@ottojs.org",
 			},
 		},
-		Copyright: "(c) 2024 Otto.js",
+		Copyright: "(c) 2024-2025 Otto.js",
 		Commands: []*cli.Command{
 			{
 				Name:  "encrypt",
