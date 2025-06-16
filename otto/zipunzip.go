@@ -14,11 +14,22 @@ import (
 // https://pkg.go.dev/archive/zip
 
 func ZipDirectory(directory, target string) error {
-
-	// Create Target ZIP File
-	filehandle, err := os.Create(target)
+	// Validate and sanitize source directory
+	safeDirectory, err := SecurePath(directory)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid source directory: %w", err)
+	}
+
+	// Validate and sanitize target file
+	safeTarget, err := SecurePath(target)
+	if err != nil {
+		return fmt.Errorf("invalid target path: %w", err)
+	}
+
+	// Create Target ZIP File with secure permissions
+	filehandle, err := os.OpenFile(safeTarget, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0600)
+	if err != nil {
+		return fmt.Errorf("failed to create zip file: %w", err)
 	}
 	defer filehandle.Close()
 
@@ -28,7 +39,7 @@ func ZipDirectory(directory, target string) error {
 	defer writer.Close()
 
 	// Loop through files in directory
-	return filepath.Walk(directory, ZipFileFunction(writer, directory))
+	return filepath.Walk(safeDirectory, ZipFileFunction(writer, safeDirectory))
 }
 
 // Closure function factory
@@ -81,22 +92,39 @@ func ZipFileFunction(writer *zip.Writer, directory string) func(path string, inf
 }
 
 func UnzipDirectory(source, destination string) error {
-	// Open ZIP File
-	zipreader, err := zip.OpenReader(source)
+	// Validate and sanitize source ZIP file
+	safeSource, err := SecurePath(source)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid source path: %w", err)
+	}
+
+	// If destination is empty, use current directory
+	if destination == "" {
+		destination = "."
+	}
+
+	// Validate and sanitize destination directory
+	safeDest, err := SecurePath(destination)
+	if err != nil {
+		return fmt.Errorf("invalid destination path: %w", err)
+	}
+
+	// Get absolute path for destination
+	absDestination, err := filepath.Abs(safeDest)
+	if err != nil {
+		return fmt.Errorf("failed to resolve destination path: %w", err)
+	}
+
+	// Open ZIP File
+	zipreader, err := zip.OpenReader(safeSource)
+	if err != nil {
+		return fmt.Errorf("failed to open zip file: %w", err)
 	}
 	defer zipreader.Close()
 
-	// Resolve the absolute path on this OS
-	destination, err = filepath.Abs(destination)
-	if err != nil {
-		return err
-	}
-
 	// Loop to extract all files
 	for _, f := range zipreader.File {
-		err := UnzipFile(f, destination)
+		err := UnzipFile(f, absDestination)
 		if err != nil {
 			return err
 		}
@@ -129,10 +157,20 @@ func UnzipFile(filehandle *zip.File, destination string) error {
 	}
 	defer zippedFile.Close()
 
-	// Open Destination file for writing
-	destinationFile, err := os.OpenFile(thefilepath, os.O_CREATE, filehandle.Mode())
+	// Ensure the directory exists
+	if err := os.MkdirAll(filepath.Dir(thefilepath), 0700); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	// Open Destination file for writing with secure permissions
+	// Use more restrictive permissions than in the zip file
+	mode := filehandle.Mode()
+	if mode.Perm() > 0600 {
+		mode = 0600
+	}
+	destinationFile, err := os.OpenFile(thefilepath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create file: %w", err)
 	}
 	defer destinationFile.Close()
 

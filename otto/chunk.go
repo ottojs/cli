@@ -8,10 +8,16 @@ import (
 )
 
 func FindChunkInFile(path string, chunk []string) (bool, error) {
-	// Open the file
-	filehandle, err := os.Open(path)
+	// Validate and sanitize the path
+	safePath, err := SecurePath(path)
 	if err != nil {
-		return false, fmt.Errorf("failed to open file %s: %v", path, err)
+		return false, fmt.Errorf("invalid file path: %w", err)
+	}
+
+	// Open the file
+	filehandle, err := os.Open(safePath)
+	if err != nil {
+		return false, fmt.Errorf("failed to open file %s: %w", safePath, err)
 	}
 	defer filehandle.Close()
 
