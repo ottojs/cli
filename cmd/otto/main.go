@@ -111,7 +111,7 @@ func main() {
 								return err
 							}
 							fmt.Println("> Provide Key/Password exactly then press enter:")
-							keyStringHex, _ := otto.promptSensitive()
+							keyStringHex, _ := otto.PromptSensitive()
 							keyBytes, _ := otto.StringHexToBytes(keyStringHex)
 							decryptedBytes, _ := otto.Decrypt(encryptedBytes, keyBytes)
 							destFilename := encfilename[0 : len(encfilename)-4]
@@ -194,7 +194,7 @@ func main() {
 						return errors.New("invalid target, it either does not exist or is not a directory")
 					}
 					query := strings.TrimSpace(cCtx.Args().Get(1))
-					results, err2 := otto.ScanDirectories([]string{target}, query)
+					results, err2 := otto.ScanDirectories([]string{target}, []string{query})
 					if err2 != nil {
 						return err2
 					}

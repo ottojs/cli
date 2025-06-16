@@ -19,7 +19,7 @@ func Exists(path string) (bool, bool, error) {
 }
 
 // Scans list of directories for file name pattern
-func ScanDirectories(dirs []string, pattern string) ([]string, error) {
+func ScanDirectories(dirs, patterns []string) ([]string, error) {
 	var matches []string
 
 	for _, dir := range dirs {
@@ -37,10 +37,16 @@ func ScanDirectories(dirs []string, pattern string) ([]string, error) {
 
 			// No directories please (you can change this)
 			if !d.IsDir() {
-				matched, err := filepath.Match(pattern, filepath.Base(path))
-				// Invalid pattern
-				if err != nil {
-					return err
+				matched := false
+				for _, p := range patterns {
+					gotmatch, err := filepath.Match(p, filepath.Base(path))
+					// Invalid pattern
+					if err != nil {
+						return err
+					}
+					if gotmatch {
+						matched = true
+					}
 				}
 				// Do we have a match?
 				if matched {
