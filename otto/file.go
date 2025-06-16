@@ -99,3 +99,45 @@ func EnsureChunkInFile(path string, content []string) error {
 	}
 	return nil
 }
+
+// Updates a line that starts with the given prefix in a file
+// If no line with the prefix exists, returns an error
+// If allowAbsolute is true, it allows absolute paths and home directory expansion
+func UpdateLineWithPrefix(filename, prefix, newLine string, allowAbsolute bool) error {
+	// Validate and sanitize the path
+	safePath, err := SecurePathWithOptions(filename, allowAbsolute)
+	if err != nil {
+		return fmt.Errorf("invalid file path: %w", err)
+	}
+
+	contents, err := os.ReadFile(safePath)
+	if err != nil {
+		return fmt.Errorf("failed to read file: %w", err)
+	}
+
+	lines := strings.Split(string(contents), OSNewLine)
+	updated := false
+
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, prefix) {
+			lines[i] = newLine
+			updated = true
+			break
+		}
+	}
+
+	if !updated {
+		return fmt.Errorf("no line found with prefix: %s", prefix)
+	}
+
+	// Preserve file permissions if it exists
+	info, err := os.Stat(safePath)
+	mode := os.FileMode(0600)
+	if err == nil {
+		mode = info.Mode()
+	}
+
+	newContent := strings.Join(lines, OSNewLine)
+	return os.WriteFile(safePath, []byte(newContent), mode)
+}

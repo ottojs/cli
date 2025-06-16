@@ -45,31 +45,13 @@ func OSProgramPath(appname string) string {
 }
 
 func AdminCheck() bool {
-	// Method 1: Check if we're running as root (UID 0)
-	if os.Geteuid() == 0 {
-		return true
-	}
-
-	// Method 2: Check if we're running with sudo
-	// When running with sudo, SUDO_USER is set
-	if os.Getenv("SUDO_USER") != "" {
-		return true
-	}
-
-	// Method 3: Check username as fallback
-	currentUser, err := user.Current()
-	if err != nil {
-		Log("Error checking user:", err)
-		return false
-	}
-
-	return currentUser.Username == "root"
+	return UnixAdminCheck()
 }
 
 func EnvVarSet(key, value string) error {
-	// Validate key - no spaces or special characters
-	if strings.ContainsAny(key, " \t\n=") {
-		return fmt.Errorf("invalid environment variable name: %s", key)
+	// Validate key
+	if err := ValidateEnvVarName(key); err != nil {
+		return err
 	}
 
 	// Set for current process
@@ -77,17 +59,16 @@ func EnvVarSet(key, value string) error {
 		return fmt.Errorf("failed to set environment variable: %w", err)
 	}
 
-	// Get bash profile file
-	homeDir := OSHomeDir()
-	if homeDir == "" {
-		return fmt.Errorf("could not determine home directory")
+	// Get profile file
+	profileFile := GetShellProfileFile()
+	if profileFile == "" {
+		return fmt.Errorf("could not determine shell profile file")
 	}
 
-	// Use .bashrc for Linux (most common)
-	profileFile := filepath.Join(homeDir, ".bashrc")
-
 	// First, check if we need to update an existing export
-	if err := updateExistingEnvVar(profileFile, key, value); err == nil {
+	exportPrefix := fmt.Sprintf("export %s=", key)
+	newExportLine := fmt.Sprintf("export %s=\"%s\"", key, value)
+	if err := UpdateLineWithPrefix(profileFile, exportPrefix, newExportLine, true); err == nil {
 		return nil // Successfully updated existing var
 	}
 
@@ -103,7 +84,7 @@ func EnvVarSet(key, value string) error {
 	// Check if our marker already exists
 	markerExists, err := FindChunkInFileWithOptions(profileFile, marker[1:], true) // Skip empty line for search, allow absolute paths
 	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to check .bashrc: %w", err)
+		return fmt.Errorf("failed to check shell profile: %w", err)
 	}
 
 	// Prepare content to append
@@ -118,7 +99,7 @@ func EnvVarSet(key, value string) error {
 
 	// Append to file with backup
 	if err := AppendToFileWithBackupAndOptions(profileFile, content, ".bak", true); err != nil {
-		return fmt.Errorf("failed to update .bashrc: %w", err)
+		return fmt.Errorf("failed to update shell profile: %w", err)
 	}
 
 	return nil
@@ -134,14 +115,11 @@ func EnvVarDelete(key string) error {
 		return fmt.Errorf("failed to unset environment variable: %w", err)
 	}
 
-	// Get bash profile file
-	homeDir := OSHomeDir()
-	if homeDir == "" {
-		return fmt.Errorf("could not determine home directory")
+	// Get profile file
+	profileFile := GetShellProfileFile()
+	if profileFile == "" {
+		return fmt.Errorf("could not determine shell profile file")
 	}
-
-	// Use .bashrc for Linux
-	profileFile := filepath.Join(homeDir, ".bashrc")
 
 	// Delete lines that export this variable
 	exportPrefix := fmt.Sprintf("export %s=", key)
@@ -150,39 +128,8 @@ func EnvVarDelete(key string) error {
 			// File doesn't exist, nothing to delete
 			return nil
 		}
-		return fmt.Errorf("failed to update .bashrc: %w", err)
+		return fmt.Errorf("failed to update shell profile: %w", err)
 	}
 
 	return nil
-}
-
-// Updates an existing environment variable export in the file
-func updateExistingEnvVar(filepath, key, value string) error {
-	// Read file content
-	content, err := os.ReadFile(filepath)
-	if err != nil {
-		return err // Not found or can't read
-	}
-
-	lines := strings.Split(string(content), OSNewLine)
-	exportPrefix := fmt.Sprintf("export %s=", key)
-	newExportLine := fmt.Sprintf("export %s=\"%s\"", key, value)
-	updated := false
-
-	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, exportPrefix) {
-			lines[i] = newExportLine
-			updated = true
-			break
-		}
-	}
-
-	if !updated {
-		return fmt.Errorf("environment variable %s not found", key)
-	}
-
-	// Write back the updated content
-	newContent := strings.Join(lines, OSNewLine)
-	return WriteFileWithOptions([]byte(newContent), filepath, true)
 }
