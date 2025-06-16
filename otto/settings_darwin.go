@@ -28,7 +28,7 @@ func OSHomeDir() string {
 	// Get the current user
 	currentUser, err := user.Current()
 	if err != nil {
-		Log("Error:", err)
+		LogError("Error getting current user: %v", err)
 		return ""
 	}
 

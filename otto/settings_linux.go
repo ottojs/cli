@@ -22,7 +22,7 @@ func OSHomeDir() string {
 	// Fallback to current user's home directory
 	currentUser, err := user.Current()
 	if err != nil {
-		Log("Error getting home directory:", err)
+		LogError("Error getting home directory: %v", err)
 		return ""
 	}
 	return currentUser.HomeDir

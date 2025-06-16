@@ -92,7 +92,7 @@ func UnixAdminCheck() bool {
 	// Method 3: Check username as fallback
 	currentUser, err := user.Current()
 	if err != nil {
-		Log("Error checking user:", err)
+		LogError("Error checking user: %v", err)
 		return false
 	}
 
