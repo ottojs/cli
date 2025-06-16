@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"log"
@@ -9,11 +8,9 @@ import (
 	"os"
 	"runtime"
 	"strings"
-	"syscall"
 
 	"code.ottojs.org/go/otto"
 	cli "github.com/urfave/cli/v2"
-	"golang.org/x/term"
 )
 
 func main() {
@@ -90,7 +87,7 @@ func main() {
 							encryptedString := strings.TrimSpace(cCtx.Args().Get(0))
 							encryptedBytes, _ := otto.StringHexToBytes(encryptedString)
 							fmt.Println("> Provide Key/Password exactly then press enter:")
-							keyStringHex, _ := promptSensitive()
+							keyStringHex, _ := otto.PromptSensitive()
 							keyBytes, _ := otto.StringHexToBytes(keyStringHex)
 							decryptedBytes, _ := otto.Decrypt(encryptedBytes, keyBytes)
 							fmt.Println(string(decryptedBytes))
@@ -114,7 +111,7 @@ func main() {
 								return err
 							}
 							fmt.Println("> Provide Key/Password exactly then press enter:")
-							keyStringHex, _ := promptSensitive()
+							keyStringHex, _ := otto.promptSensitive()
 							keyBytes, _ := otto.StringHexToBytes(keyStringHex)
 							decryptedBytes, _ := otto.Decrypt(encryptedBytes, keyBytes)
 							destFilename := encfilename[0 : len(encfilename)-4]
@@ -307,20 +304,4 @@ func main() {
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func promptNormal() (string, error) {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter Value: ")
-	value, err := reader.ReadString('\n')
-	return value, err
-}
-
-func promptSensitive() (string, error) {
-	byteValue, err := term.ReadPassword(int(syscall.Stdin))
-	if err != nil {
-		return "", err
-	}
-	password := string(byteValue)
-	return strings.TrimSpace(password), nil
 }
