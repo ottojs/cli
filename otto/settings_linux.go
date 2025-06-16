@@ -3,3 +3,4 @@
 package otto
 
 const OperatingSystem = "Linux"
+const OSNewLine = "\n"

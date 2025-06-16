@@ -239,7 +239,7 @@ func main() {
 					}
 					fmt.Println("Searched:", target)
 					fmt.Println("... for...")
-					fmt.Println(strings.Join(needle, "\n"))
+					fmt.Println(strings.Join(needle, otto.OSNewLine))
 					fmt.Println("Found?:", found)
 					return nil
 				},
@@ -259,15 +259,15 @@ func main() {
 					// Run
 					stdout, stderr, err := otto.ExecuteBinary(binary, args...)
 					if err != nil {
-						fmt.Printf("Error: %v\n", err)
-						fmt.Printf("Stderr: %s\n", stderr)
+						fmt.Printf("Error: %v"+otto.OSNewLine, err)
+						fmt.Printf("Stderr: %s"+otto.OSNewLine, stderr)
 						return nil
 					}
 
 					// All went well
-					fmt.Printf("Stdout: %s\n", stdout)
+					fmt.Printf("Stdout: %s"+otto.OSNewLine, stdout)
 					if stderr != "" {
-						fmt.Printf("Stderr: %s\n", stderr)
+						fmt.Printf("Stderr: %s"+otto.OSNewLine, stderr)
 					}
 					return nil
 				},
@@ -295,10 +295,11 @@ func main() {
 					if err2 != nil {
 						return err2
 					}
-					err3 := otto.AppendToFileWithBackup("test/findchunk.txt", strings.Join(decoded, "\n")+"\n", ".bak")
+					err3 := otto.AppendToFileWithBackup("test/findchunk.txt", strings.Join(decoded, otto.OSNewLine)+otto.OSNewLine, ".bak")
 					return err3
 				},
 			},
+			{
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
