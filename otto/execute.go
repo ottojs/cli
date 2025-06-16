@@ -9,7 +9,8 @@ import (
 	"time"
 )
 
-const forbiddenCharacters string = "|&;<>()$`*?[]{}'\"\\"
+const forbiddenCharacters string = "|&;<>()$`*?[]{}'\""
+const forbiddenCharactersStrict string = "|&;<>()$`*?[]{}'\"\\"
 
 // Returns stdout, stderr, and error/nil
 func ExecuteBinary(binary string, args ...string) (stdout, stderr string, err error) {
