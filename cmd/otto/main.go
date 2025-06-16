@@ -44,11 +44,20 @@ func main() {
 						Usage: "encrypt a string",
 						Action: func(cCtx *cli.Context) error {
 							plaintext := cCtx.Args().First()
+							if plaintext == "" {
+								return errors.New("please provide a string to encrypt")
+							}
 							plainbytes := []byte(plaintext)
-							keyBytes, _ := otto.GenerateKey()
+							keyBytes, err := otto.GenerateKey()
+							if err != nil {
+								return fmt.Errorf("failed to generate encryption key: %w", err)
+							}
 							keyStringHex := otto.BytesToStringHex(keyBytes)
 							fmt.Println("ENCRYPTION KEY (SAVE THIS):", keyStringHex)
-							encryptedBytes, _ := otto.Encrypt(plainbytes, keyBytes)
+							encryptedBytes, err := otto.Encrypt(plainbytes, keyBytes)
+							if err != nil {
+								return fmt.Errorf("encryption failed: %w", err)
+							}
 							encodedStringHex := otto.BytesToStringHex(encryptedBytes)
 							fmt.Println("OUTPUT (HEX STRING):", encodedStringHex)
 							return nil
@@ -70,12 +79,18 @@ func main() {
 							if err != nil {
 								return err
 							}
-							keyBytes, _ := otto.GenerateKey()
+							keyBytes, err := otto.GenerateKey()
+							if err != nil {
+								return fmt.Errorf("failed to generate encryption key: %w", err)
+							}
 							keyStringHex := otto.BytesToStringHex(keyBytes)
 							fmt.Println("ENCRYPTION KEY (SAVE THIS):", keyStringHex)
-							encryptedBytes, _ := otto.Encrypt(plainbytes, keyBytes)
+							encryptedBytes, err := otto.Encrypt(plainbytes, keyBytes)
+							if err != nil {
+								return fmt.Errorf("encryption failed: %w", err)
+							}
 							destFilename := fmt.Sprintf("%s.enc", plainfilename)
-							err2 := os.WriteFile(destFilename, encryptedBytes, 0660)
+							err2 := os.WriteFile(destFilename, encryptedBytes, 0600)
 							if err2 != nil {
 								return err2
 							}
@@ -94,11 +109,26 @@ func main() {
 						Usage: "decrypt a string",
 						Action: func(cCtx *cli.Context) error {
 							encryptedString := strings.TrimSpace(cCtx.Args().Get(0))
-							encryptedBytes, _ := otto.StringHexToBytes(encryptedString)
+							if encryptedString == "" {
+								return errors.New("please provide an encrypted string to decrypt")
+							}
+							encryptedBytes, err := otto.StringHexToBytes(encryptedString)
+							if err != nil {
+								return fmt.Errorf("invalid hex string: %w", err)
+							}
 							fmt.Println("> Provide Key/Password exactly then press enter:")
-							keyStringHex, _ := otto.PromptSensitive()
-							keyBytes, _ := otto.StringHexToBytes(keyStringHex)
-							decryptedBytes, _ := otto.Decrypt(encryptedBytes, keyBytes)
+							keyStringHex, err := otto.PromptSensitive()
+							if err != nil {
+								return fmt.Errorf("failed to read key: %w", err)
+							}
+							keyBytes, err := otto.StringHexToBytes(keyStringHex)
+							if err != nil {
+								return fmt.Errorf("invalid key format: %w", err)
+							}
+							decryptedBytes, err := otto.Decrypt(encryptedBytes, keyBytes)
+							if err != nil {
+								return fmt.Errorf("decryption failed: %w", err)
+							}
 							fmt.Println(string(decryptedBytes))
 							return nil
 						},
@@ -120,11 +150,20 @@ func main() {
 								return err
 							}
 							fmt.Println("> Provide Key/Password exactly then press enter:")
-							keyStringHex, _ := otto.PromptSensitive()
-							keyBytes, _ := otto.StringHexToBytes(keyStringHex)
-							decryptedBytes, _ := otto.Decrypt(encryptedBytes, keyBytes)
+							keyStringHex, err := otto.PromptSensitive()
+							if err != nil {
+								return fmt.Errorf("failed to read key: %w", err)
+							}
+							keyBytes, err := otto.StringHexToBytes(keyStringHex)
+							if err != nil {
+								return fmt.Errorf("invalid key format: %w", err)
+							}
+							decryptedBytes, err := otto.Decrypt(encryptedBytes, keyBytes)
+							if err != nil {
+								return fmt.Errorf("decryption failed: %w", err)
+							}
 							destFilename := encfilename[0 : len(encfilename)-4]
-							err2 := os.WriteFile(destFilename, decryptedBytes, 0666)
+							err2 := os.WriteFile(destFilename, decryptedBytes, 0600)
 							if err2 != nil {
 								return err2
 							}
