@@ -3,4 +3,3 @@
 package otto
 
 const OperatingSystem = "macOS"
-const PathSeparator = "/"
