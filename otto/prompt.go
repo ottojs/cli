@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"syscall"
 
 	"golang.org/x/term"
 )
@@ -18,7 +17,7 @@ func PromptNormal() (string, error) {
 }
 
 func PromptSensitive() (string, error) {
-	byteValue, err := term.ReadPassword(int(syscall.Stdin))
+	byteValue, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err
 	}
