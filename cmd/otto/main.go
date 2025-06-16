@@ -7,11 +7,20 @@ import (
 	"net/url"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
+	"time"
 
 	"code.ottojs.org/go/otto"
 	cli "github.com/urfave/cli/v2"
 )
+
+func WaitSeconds(seconds int) {
+	fmt.Println("")
+	fmt.Println("==========")
+	fmt.Printf("Waiting %d seconds\n", seconds)
+	time.Sleep(time.Second * time.Duration(seconds))
+}
 
 func main() {
 	app := &cli.App{
@@ -300,6 +309,24 @@ func main() {
 				},
 			},
 			{
+				Name:  "is-admin",
+				Usage: "checks for admin",
+				Action: func(cCtx *cli.Context) error {
+					// Check for Admin
+					otto.Log("Admin Check:", strconv.FormatBool(otto.AdminCheck()))
+					if !otto.AdminCheck() {
+						fmt.Println("this tool must be run with admin/root privileges")
+						WaitSeconds(10)
+						return errors.New("not admin")
+					}
+					fmt.Println("You are an admin!")
+					fmt.Println("Home Dir:", otto.OSHomeDir())
+					fmt.Println("Program Path:", otto.OSProgramPath("Otto"))
+					fmt.Println("Env PATH:", otto.EnvVarGet("PATH"))
+					WaitSeconds(10)
+					return nil
+				},
+			},
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
